@@ -27,6 +27,7 @@ jobs:
       - name: Get the version in package.json
         run: |
           EER_VERSION=$(cat package.json | grep version | cut -d'"' -f4)
+          echo ${EER_VERSION}
           echo "EER_VERSION=${EER_VERSION}" >> $GITHUB_ENV
 
       - name: Install npm dependencies
