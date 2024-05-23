@@ -1,5 +1,0 @@
-/* Tag override since it has conflicts with the EPFL elements style */
-
-.tag {
-    display: contents !important;
-}
