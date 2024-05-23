@@ -31,7 +31,7 @@ jobs:
         run: npx storybook build
 
       - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@3.7.1
+        uses: JamesIves/github-pages-deploy-action@4.6.1
         with:
           ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH: gh-pages
@@ -57,7 +57,7 @@ jobs:
         run: npm run build
 
       - name: Create the package.json
-        run: jq -n --arg version v0.0.1 '{"name":"epfl-elements-react","version":$version,"description":"EPFL Elements React Library","main":"index.js","repository":{"type":"git","url":"git+https://github.com/epfl-si/epfl-elements-react.git"},"keywords":["epfl-elements-react"],"author":"EPFL ISAS-FSD","license":"MIT","types":"./index.d.ts","bugs":{"url":"https://github.com/epfl-si/epfl-elements-react/issues"},"homepage":"https://github.com/epfl-si/epfl-elements-react#readme"}' > dist/package.json
+        run: jq -n --arg version v0.0.1 '{"name":"epfl-elements-react","version":$version,"description":"EPFL Elements React Library","main":"index.js","repository":"github:epfl-si/epfl-elements-react","keywords":["epfl-elements-react"],"author":"EPFL ISAS-FSD","license":"MIT","types":"./index.d.ts","bugs":{"url":"https://github.com/epfl-si/epfl-elements-react/issues"},"homepage":"https://github.com/epfl-si/epfl-elements-react#readme"}' > dist/package.json
 
       - name: Create the epfl-elements-react package
         run: |
