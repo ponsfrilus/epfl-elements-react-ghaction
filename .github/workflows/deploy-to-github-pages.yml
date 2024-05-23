@@ -5,7 +5,6 @@ on:
     # tags:
     #   - "v[0-1].*"
     branches:
-      - next
       - main
 
   # Allows you to run this workflow manually from the Actions tab
@@ -23,7 +22,7 @@ jobs:
       - name: Checkout the 'next' branch
         uses: actions/checkout@v4
         with:
-          ref: 'next'
+          ref: 'main'
 
       - name: Install npm dependencies
         run: npm install
