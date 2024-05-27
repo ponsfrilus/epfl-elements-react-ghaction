@@ -2,8 +2,6 @@ name: Deploy Storybook to GitHub Pages
 
 on:
   push:
-    # tags:
-    #   - "v[0-1].*"
     branches:
       - main
 
@@ -11,7 +9,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  storybook:
+  epfl-elements-react:
     runs-on: ubuntu-latest
     steps:
       - name: Setup Node.js
@@ -24,11 +22,11 @@ jobs:
         with:
           ref: 'main'
 
-      - name: Get the version in package.json
+      - name: Export Elements React Version (EER_VERSION)
+        shell: bash
         run: |
-          EER_VERSION=$(cat package.json | grep version | cut -d'"' -f4)
-          echo ${EER_VERSION}
-          echo "EER_VERSION=${EER_VERSION}" >> $GITHUB_ENV
+          echo "EER_VERSION=$(cat package.json | grep version | cut -d'"' -f4)" >> $GITHUB_ENV
+          echo "EER_VERSION=${{ env.EER_VERSION }}"
 
       - name: Install npm dependencies
         run: npm install
@@ -43,41 +41,53 @@ jobs:
           BRANCH: gh-pages
           FOLDER: storybook-static
 
-  library:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Checkout the 'next' branch
-        uses: actions/checkout@v4
-        with:
-          ref: 'main'
-
-      - name: Install npm dependencies
-        run: npm install
-
-      - name: debug version
-        run: echo "Version is ${{ env.EER_VERSION }} XXX"
-
       - name: Build the epfl-elements-react library
         run: npm run build
 
       - name: Create the package.json
-        run: jq -n --arg version v0.0.1 '{"name":"epfl-elements-react","version":$version,"description":"EPFL Elements React Library","main":"index.js","repository":"github:epfl-si/epfl-elements-react","keywords":["epfl-elements-react"],"author":"EPFL ISAS-FSD","license":"MIT","types":"./index.d.ts","bugs":{"url":"https://github.com/epfl-si/epfl-elements-react/issues"},"homepage":"https://github.com/epfl-si/epfl-elements-react#readme"}' > dist/package.json
+        run: jq -n --arg version v${{ env.EER_VERSION }} '{"name":"epfl-elements-react","version":$version,"description":"EPFL Elements React Library","main":"index.js","repository":"github:epfl-si/epfl-elements-react","keywords":["epfl-elements-react"],"author":"EPFL ISAS-FSD","license":"MIT","types":"./index.d.ts","bugs":{"url":"https://github.com/epfl-si/epfl-elements-react/issues"},"homepage":"https://github.com/epfl-si/epfl-elements-react#readme"}' > dist/package.json
 
       - name: Create the epfl-elements-react package
         run: |
           npm pack ./dist/
-          cp epfl-elements-react-*.tgz epfl-elements-react.tgz
+          ls -al
+          cp epfl-elements-react-v${{ env.EER_VERSION }}.tgz epfl-elements-react.tgz
 
       - name: Archive production artifacts
         uses: actions/upload-artifact@v4
         with:
           name: epfl-elements-react
           path: |
-            epfl-elements-react.tgz
+            epfl-elements-react-v${{ env.EER_VERSION }}.tgz
 
-  # release:
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        with:
+          tag_name: v${{ env.EER_VERSION }}
+          release_name: v${{ env.EER_VERSION }}
+          body_path: CHANGELOG.md
+          draft: false
+          prerelease: false
+
+      - name: Upload release artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: epfl-elements-react.tgz
+          asset_name: epfl-elements-react.tgz
+          asset_content_type: application/tar+gzip
+
+      - name: Upload release artifact v${{ env.EER_VERSION }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: epfl-elements-react-v${{ env.EER_VERSION }}.tgz
+          asset_name: epfl-elements-react-v${{ env.EER_VERSION }}.tgz
+          asset_content_type: application/tar+gzip
