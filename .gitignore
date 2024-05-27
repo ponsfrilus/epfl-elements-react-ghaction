@@ -28,3 +28,6 @@ dist/
 
 # Storybook Static
 storybook-static/
+
+*.tar.gz
+*.tgz
