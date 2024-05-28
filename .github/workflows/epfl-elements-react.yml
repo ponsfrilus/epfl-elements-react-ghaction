@@ -1,21 +1,21 @@
 #
 # This workflow follows the following steps:
 #  1. Checkout the main branch (see line 27)
-#  1. Get the version from the package.json file and store it as environment 
+#  1. Get the version from the package.json file and store it as environment
 #     variable for this job
 #  1. Build the Storybook and publish it to the GitHub pages
 #     https://epfl-si.github.io/epfl-elements-react/
 #  1. Build the epfl-elements-react library
 #    - add the package.json and run npm pack
 #  1. Archive production artifacts (not used right now but might be useful later)
-#  1. Create a release (with a proper Tag based on the version) → 
+#  1. Create a release (with a proper Tag based on the version) →
 #     duplicated tag are not allowed and will fail!
 #  1. Upload both epfl-elements-react-v${{ env.EER_VERSION }}.tgz and
 #     epfl-elements-react.tgz to the release
 #
 #
 #  Note:
-#    - One might want to split the steps in different jobs: environment 
+#    - One might want to split the steps in different jobs: environment
 #      variables will not work in this case and you will have to use artifacts
 #      https://docs.github.com/en/actions/using-workflows/storing-workflow-data-as-artifacts#passing-data-between-jobs-in-a-workflow
 #    - GitHub propose a Packages registry that stores npm packages — we rather
@@ -81,7 +81,7 @@ jobs:
 
       # Create the package.json that is needed to create a package
       - name: Create the package.json
-        run: jq -n --arg version v${{ env.EER_VERSION }} '{"name":"epfl-elements-react","version":$version,"description":"EPFL Elements React Library","main":"index.js","repository":"github:epfl-si/epfl-elements-react","keywords":["epfl-elements-react"],"author":"EPFL ISAS-FSD","license":"MIT","types":"./index.d.ts","bugs":{"url":"https://github.com/epfl-si/epfl-elements-react/issues"},"homepage":"https://github.com/epfl-si/epfl-elements-react#readme"}' > dist/package.json
+        run: jq -n --arg version v${{ env.EER_VERSION }} '{"name":"epfl-elements-react","version":$version,"description":"EPFL Elements React Library","main":"index.js","repository":"github:epfl-si/epfl-elements-react","keywords":["epfl-elements-react"],"author":"EPFL ISAS-FSD","contributors":["Amine672 (https://github.com/Amine672)","Azecko (https://github.com/Azecko)","domq (https://github.com/domq)","GoldenCorgo (https://github.com/GoldenCorgo)","ponsfrilus (https://github.com/ponsfrilus)","rosamaggi (https://github.com/rosamaggi)","webdacjs (https://github.com/webdacjs)"],"license":"MIT","types":"./index.d.ts","bugs":{"url":"https://github.com/epfl-si/epfl-elements-react/issues"},"homepage":"https://github.com/epfl-si/epfl-elements-react#readme"}' > dist/package.json
 
       # Create the epfl-elements-react package
       - name: Create the epfl-elements-react package
@@ -99,36 +99,29 @@ jobs:
             epfl-elements-react-v${{ env.EER_VERSION }}.tgz
 
       # Create Release
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
-        with:
-          tag_name: v${{ env.EER_VERSION }}
-          release_name: v${{ env.EER_VERSION }}
-          body_path: CHANGELOG.md
-          draft: false
-          prerelease: false
+      # TODO: improve CHANGELOG
+      # TODO: use something else (https://github.com/actions/create-release/issues/119)
+      # - name: Create Release
+      #   id: create_release
+      #   uses: actions/create-release@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+      #   with:
+      #     tag_name: v${{ env.EER_VERSION }}
+      #     release_name: v${{ env.EER_VERSION }}
+      #     body_path: CHANGELOG.md
+      #     draft: false
+      #     prerelease: false
 
-      # Upload release artifact (version neutral)
-      - name: Upload release artifact
-        uses: actions/upload-release-asset@v1
+      # https://stackoverflow.com/a/75679739/960623
+      - name: Create release
         env:
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: epfl-elements-react.tgz
-          asset_name: epfl-elements-react.tgz
-          asset_content_type: application/tar+gzip
-
-      # Upload release artifact with specific verison in the name
-      - name: Upload release artifact v${{ env.EER_VERSION }}
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: epfl-elements-react-v${{ env.EER_VERSION }}.tgz
-          asset_name: epfl-elements-react-v${{ env.EER_VERSION }}.tgz
-          asset_content_type: application/tar+gzip
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          tag: v${{ env.EER_VERSION }}
+        run: |
+          gh release create "$tag" \
+            --title="${GITHUB_REPOSITORY#*/} ${tag#v}" \
+            --generate-notes
+          gh release upload "$tag" \
+            epfl-elements-react.tgz \
+            epfl-elements-react-v${{ env.EER_VERSION }}.tgz
